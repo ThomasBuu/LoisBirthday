@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chasse au trésor GPS</title>
+  <script src="https://unpkg.com/react@17/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@17/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100">
+  <div id="root"></div>
+  
+  <script type="text/babel">
+    const TreasureHunt = () => {
+      const [currentPosition, setCurrentPosition] = React.useState(null);
+      const [nearbyLocation, setNearbyLocation] = React.useState(null);
+      const [error, setError] = React.useState(null);
+      const [distance, setDistance] = React.useState(null);
+      const [permissionStatus, setPermissionStatus] = React.useState('pending');
+      const [userAnswer, setUserAnswer] = React.useState('');
+      const [solvedLocations, setSolvedLocations] = React.useState([]);
+      const [secretWord, setSecretWord] = React.useState('');
+      const [gameCompleted, setGameCompleted] = React.useState(false);
+      const [defaultQuestion, setDefaultQuestion] = React.useState(true);
+      const [debugMode, setDebugMode] = React.useState(false);
+      const [selectedDebugLocation, setSelectedDebugLocation] = React.useState(null);
+
+      // Charger les lieux résolus depuis localStorage au démarrage
+      React.useEffect(() => {
+        const savedLocations = localStorage.getItem('solvedLocations');
+        if (savedLocations) {
+          setSolvedLocations(JSON.parse(savedLocations));
+        }
+      }, []);
+
+      // Sauvegarder les lieux résolus dans localStorage à chaque mise à jour
+      React.useEffect(() => {
+        if (solvedLocations.length > 0) {
+          localStorage.setItem('solvedLocations', JSON.stringify(solvedLocations));
+        }
+      }, [solvedLocations]);
+      const locations = [
+        { 
+          name: "Barques", 
+          lat: 48.83300, 
+          lng: 2.40986, 
+          question: "Combien Loïs va-t-il payer individuellement si il va faire de la barque au lac de Dausmenil avec Luna pendant 3heures ?", 
+          options: [
+            "37,00€",
+            "39,50€",
+            "47,40€",
+            "79,00€"
+          ],
+          answer: "39,50", 
+          letter: "E",
+          image: "https://picsum.photos/seed/barques/400/300" 
+        },
+        { 
+          name: "Île des paons", 
+          lat: 48.83105, 
+          lng: 2.41189, 
+          question: "Quel oiseau ne trouve-t-on pas sur le lac de daumesnil ?", 
+          options: [
+            "Oie de Guinée",
+            "Canard colvert",
+            "Foulque",
+            "Cygne"
+          ],
+          answer: "Oie de Guinée", 
+          letter: "N",
+          image: "https://picsum.photos/seed/paons/400/300" 
+        },
+        { 
+          name: "Grotte", 
+          lat: 48.83003, 
+          lng: 2.41575, 
+          question: "Combien de grottes trouve-t-on dans le parc ?", 
+          options: [
+            "Une seule",
+            "Deux",
+            "Trois",
+            "Quatre"
+          ],
+          answer: "Une seule", 
+          letter: "I",
+          image: "https://picsum.photos/seed/grotte/400/300" 
+        },
+        { 
+          name: "Pèlerins des nuages et de l'eau", 
+          lat: 48.82903, 
+          lng: 2.41375, 
+          question: "Dans un aquarium il y a 10 poissons rouges. 2 se sont noyés, 4 nagent entre les rochers et 3 sont morts. Combien de poissons rouges reste-t-il ?", 
+          options: [
+            "4",
+            "5",
+            "7",
+            "10"
+          ],
+          answer: "10", 
+          letter: "G",
+          image: "https://picsum.photos/seed/pelerins/400/300" 
+        },
+        { 
+          name: "Pont sud", 
+          lat: 48.82845, 
+          lng: 2.41837, 
+          question: "L'île de Bercy est-elle un île artificielle ? Si oui en quelle année a-t-elle été créée ?", 
+          options: [
+            "Ce n'est pas une île artificielle mais elle a été découverte transformée en parc en 1690",
+            "Ce n'est pas une île artificielle mais elle a été découverte transformée en parc en 1960",
+            "Oui en 1960",
+            "Oui en 1860"
+          ],
+          answer: "Oui en 1860", 
+          letter: "M",
+          image: "https://picsum.photos/seed/pontsud/400/300" 
+        }
+      ];
+
+      // Fonction pour calculer la distance entre deux points GPS (formule de Haversine)
+      const calculateDistance = (lat1, lon1, lat2, lon2) => {
+        const R = 6371000; // Rayon de la Terre en mètres
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLon = (lon2 - lon1) * Math.PI / 180;
+        const a = 
+          Math.sin(dLat/2) * Math.sin(dLat/2) +
+          Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+          Math.sin(dLon/2) * Math.sin(dLon/2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        return R * c;
+      };
+
+      // Fonction pour vérifier la proximité des lieux
+      const checkProximity = (position) => {
+        if (!position) return;
+        
+        const { latitude, longitude } = position.coords;
+        
+        // Trouver le lieu le plus proche
+        let closestLocation = null;
+        let minDistance = Infinity;
+        
+        locations.forEach(location => {
+          const dist = calculateDistance(latitude, longitude, location.lat, location.lng);
+          if (dist < minDistance) {
+            minDistance = dist;
+            closestLocation = { ...location, distance: dist };
+          }
+        });
+        
+        setDistance(minDistance);
+        
+        // Considérer comme "proche" si moins de 100 mètres
+        if (minDistance < 100) {
+          setNearbyLocation(closestLocation);
+          setDefaultQuestion(false);
+        } else {
+          setNearbyLocation(null);
+          setDefaultQuestion(true);
+        }
+      };
+
+      // Demander la géolocalisation
+      const requestLocation = () => {
+        setPermissionStatus('requesting');
+        
+        if (!navigator.geolocation) {
+          setError("La géolocalisation n'est pas supportée par votre navigateur");
+          setPermissionStatus('denied');
+          return;
+        }
+        
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            setCurrentPosition(position);
+            checkProximity(position);
+            setPermissionStatus('granted');
+            
+            // Mettre à jour la position régulièrement
+            const watchId = navigator.geolocation.watchPosition(
+              (newPosition) => {
+                setCurrentPosition(newPosition);
+                checkProximity(newPosition);
+              },
+              (err) => {
+                setError(`Erreur: ${err.message}`);
+                setPermissionStatus('error');
+              }
+            );
+            
+            return () => navigator.geolocation.clearWatch(watchId);
+          },
+          (err) => {
+            if (err.code === 1) { // PERMISSION_DENIED
+              setPermissionStatus('denied');
+            }
+            setError(`Erreur: ${err.message}`);
+          },
+          { enableHighAccuracy: true }
+        );
+      };
+
+      // Vérifier la réponse de l'utilisateur
+      const checkAnswer = () => {
+        if (!nearbyLocation) return;
+        
+        console.log("Réponse utilisateur:", userAnswer);
+        console.log("Réponse attendue:", nearbyLocation.answer);
+        
+        const isCorrect = userAnswer === nearbyLocation.answer;
+        
+        if (isCorrect && !solvedLocations.includes(nearbyLocation.name)) {
+          const updatedSolvedLocations = [...solvedLocations, nearbyLocation.name];
+          setSolvedLocations(updatedSolvedLocations);
+          
+          // Vérifier si toutes les énigmes sont résolues
+          if (updatedSolvedLocations.length === locations.length) {
+            alert("Félicitations ! Vous avez résolu toutes les énigmes ! Essayez maintenant de former le mot avec les lettres obtenues.");
+          } else {
+            alert(`Correct ! Vous avez obtenu la lettre "${nearbyLocation.letter}". Continuez à chercher d'autres lieux !`);
+          }
+        } else if (isCorrect) {
+          alert("Vous avez déjà résolu cette énigme !");
+        } else {
+          alert("Réponse incorrecte. Essayez encore !");
+        }
+        
+        setUserAnswer('');
+      };
+      
+      // Mode DEBUG pour tester toutes les questions
+      const activateDebugMode = () => {
+        setDebugMode(true);
+        alert("MODE DEBUG ACTIVÉ ! Vous pouvez maintenant sélectionner un lieu à tester.");
+      };
+      
+      // Sélectionner un lieu en mode DEBUG
+      const selectDebugLocation = (location) => {
+        setSelectedDebugLocation(location);
+        setNearbyLocation(location);
+        setDefaultQuestion(false);
+      };
+
+      // Vérifier le mot secret
+      const checkSecretWord = () => {
+        // Le mot secret est "ENIGME"
+        if (secretWord.toLowerCase() === "enigme") {
+          setGameCompleted(true);
+        } else if (secretWord.toLowerCase() === "debug") {
+          activateDebugMode();
+          setSecretWord('');
+        } else {
+          alert("Ce n'est pas le bon mot. Continuez à chercher !");
+          setSecretWord('');
+        }
+      };
+
+      // Obtenir les lettres trouvées
+      const getFoundLetters = () => {
+        let letters = "";
+        locations.forEach(location => {
+          if (solvedLocations.includes(location.name)) {
+            letters += location.letter;
+          }
+        });
+        return letters;
+      };
+
+      // Affichage de la question par défaut lorsqu'on n'est pas à proximité d'un lieu
+      const renderDefaultQuestion = () => {
+        return (
+          <div className="bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded mb-4">
+            <h3 className="font-bold text-lg mb-2">Question de test</h3>
+            <p className="mb-2">Quel est le contraire de "froid" ?</p>
+            <img 
+              src="https://picsum.photos/seed/test/400/300" 
+              alt="Test" 
+              className="w-full h-40 object-cover rounded mb-3"
+            />
+            <input
+              type="text"
+              value={userAnswer}
+              onChange={(e) => setUserAnswer(e.target.value)}
+              placeholder="Votre réponse"
+              className="w-full p-2 border rounded mb-2"
+            />
+            <button 
+              onClick={() => {
+                if (userAnswer.toLowerCase().trim() === "chaud") {
+                  alert("Correct ! C'est juste une question de test pour vous montrer comment le jeu fonctionne.");
+                } else {
+                  alert("Incorrect. Essayez 'chaud'.");
+                }
+                setUserAnswer('');
+              }}
+              className="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded"
+            >
+              Valider
+            </button>
+          </div>
+        );
+      };
+
+      // Page de victoire
+      if (gameCompleted) {
+        return (
+          <div className="p-4 max-w-md mx-auto bg-white rounded-xl shadow-md overflow-hidden">
+            <h2 className="text-2xl font-bold text-center text-green-800 mb-4">FÉLICITATIONS !</h2>
+            <img 
+              src="https://picsum.photos/seed/tresor/400/300" 
+              alt="Trésor découvert" 
+              className="w-full h-60 object-cover rounded mb-4"
+            />
+            <p className="text-center text-lg mb-4">
+              Vous avez résolu l'énigme finale et trouvé le trésor !
+            </p>
+            <p className="text-center mb-4">
+              Votre quête est maintenant terminée. Bravo pour votre perspicacité !
+            </p>
+            <a 
+              href="https://example.com/suite" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="block w-full bg-green-500 hover:bg-green-600 text-white font-medium py-2 px-4 rounded text-center"
+            >
+              Continuer l'aventure
+            </a>
+          </div>
+        );
+      }
+
+      return (
+        <div className="p-4 max-w-md mx-auto bg-white rounded-xl shadow-md overflow-hidden">
+          <h2 className="text-xl font-bold text-gray-800 mb-4">Chasse au trésor GPS</h2>
+          
+          {permissionStatus === 'pending' && (
+            <button 
+              onClick={requestLocation}
+              className="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded mb-4">
+              Commencer l'aventure
+            </button>
+          )}
+          
+          {permissionStatus === 'denied' && (
+            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+              L'accès à votre position a été refusé. Veuillez autoriser l'accès à votre position dans les paramètres de votre navigateur.
+            </div>
+          )}
+          
+          {permissionStatus === 'requesting' && (
+            <div className="text-gray-600 mb-4">
+              Demande d'accès à votre position en cours...
+            </div>
+          )}
+          
+          {error && (
+            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+              {error}
+            </div>
+          )}
+          
+          {currentPosition && (
+            <div className="mb-4">
+              <h3 className="font-medium text-gray-700">Votre position actuelle :</h3>
+              <p className="text-gray-600">
+                Latitude: {currentPosition.coords.latitude.toFixed(5)}°<br />
+                Longitude: {currentPosition.coords.longitude.toFixed(5)}°<br />
+                Précision: ±{currentPosition.coords.accuracy.toFixed(1)} mètres
+              </p>
+            </div>
+          )}
+          
+          {distance !== null && !debugMode && (
+            <div className="mb-4">
+              <h3 className="font-medium text-gray-700">Distance au lieu le plus proche :</h3>
+              <p className="text-gray-600">
+                {distance < 1000 ? 
+                  `${distance.toFixed(1)} mètres` : 
+                  `${(distance/1000).toFixed(2)} kilomètres`}
+              </p>
+            </div>
+          )}
+          
+          {/* Interface de sélection des lieux en mode DEBUG */}
+          {debugMode && (
+            <div className="mt-4 p-4 bg-purple-100 rounded-lg border border-purple-300 mb-4">
+              <h3 className="font-bold text-purple-800 mb-2">MODE DEBUG - Sélectionnez un lieu à tester :</h3>
+              <div className="grid grid-cols-1 gap-2">
+                {locations.map((location, index) => (
+                  <button
+                    key={index}
+                    onClick={() => selectDebugLocation(location)}
+                    className={`p-2 rounded ${selectedDebugLocation && selectedDebugLocation.name === location.name ? 'bg-purple-500 text-white' : 'bg-white hover:bg-purple-200'}`}
+                  >
+                    {location.name}
+                  </button>
+                ))}
+              </div>
+              <div className="mt-3 text-sm text-purple-800">
+                <span className="font-bold">Note:</span> En mode DEBUG, vous pouvez tester toutes les questions sans vous déplacer physiquement.
+              </div>
+            </div>
+          )}
+          
+          {currentPosition && defaultQuestion && !debugMode && renderDefaultQuestion()}
+          
+          {nearbyLocation && !defaultQuestion && (
+            <div className={`${solvedLocations.includes(nearbyLocation.name) ? 'bg-green-100 border-green-400 text-green-700' : 'bg-yellow-100 border-yellow-400 text-yellow-700'} border px-4 py-3 rounded mb-4`}>
+              <h3 className="font-bold">{nearbyLocation.name}</h3>
+              <p className="mb-3">{nearbyLocation.question}</p>
+              
+              {nearbyLocation.image && (
+                <img 
+                  src={nearbyLocation.image} 
+                  alt={nearbyLocation.name} 
+                  className="w-full h-40 object-cover rounded mb-3"
+                />
+              )}
+              
+              {solvedLocations.includes(nearbyLocation.name) ? (
+                <div className="bg-white p-3 rounded">
+                  <p>Énigme résolue ! Vous avez obtenu la lettre : <span className="font-bold text-xl">{nearbyLocation.letter}</span></p>
+                </div>
+              ) : (
+                <div>
+                  {nearbyLocation.options && (
+                    <div className="mb-3">
+                      {nearbyLocation.options.map((option, idx) => (
+                        <div 
+                          key={idx} 
+                          className={`p-2 mb-2 bg-white border rounded cursor-pointer hover:bg-yellow-50 ${userAnswer === option ? 'bg-yellow-100 border-yellow-500' : ''}`}
+                          onClick={() => {
+                            // Si l'option sélectionnée est exactement la réponse attendue
+                            if (option === nearbyLocation.answer) {
+                              setUserAnswer(option);
+                            } 
+                            // Pour les cas où la réponse attendue est juste une partie de l'option
+                            else if (option.includes(nearbyLocation.answer)) {
+                              setUserAnswer(nearbyLocation.answer);
+                            }
+                            // Sinon, sauvegarder l'option complète
+                            else {
+                              setUserAnswer(option);
+                            }
+                          }}
+                        >
+                          {option}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <input
+                    type="text"
+                    value={userAnswer}
+                    onChange={(e) => setUserAnswer(e.target.value)}
+                    placeholder="Votre réponse"
+                    className="w-full p-2 border rounded mb-2"
+                  />
+                  <button 
+                    onClick={checkAnswer}
+                    className="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-medium py-2 px-4 rounded"
+                  >
+                    Valider
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+          
+          {/* Section pour deviner le mot secret */}
+          <div className="mt-6 p-4 bg-purple-100 rounded-lg border border-purple-300">
+            <h3 className="font-bold text-purple-800 mb-2">Lettres découvertes :</h3>
+            <div className="flex flex-wrap gap-2 mb-4">
+              {getFoundLetters().split('').map((letter, index) => (
+                <div key={index} className="w-10 h-10 flex items-center justify-center bg-purple-500 text-white font-bold rounded">
+                  {letter}
+                </div>
+              ))}
+              {getFoundLetters().length === 0 && (
+                <p className="text-purple-700">Aucune lettre découverte pour le moment...</p>
+              )}
+            </div>
+            
+            <h3 className="font-bold text-purple-800 mb-2">Mot secret :</h3>
+            <div className="flex">
+              <input
+                type="text"
+                value={secretWord}
+                onChange={(e) => setSecretWord(e.target.value)}
+                placeholder="Entrez le mot secret"
+                className="flex-grow p-2 border rounded-l"
+              />
+              <button 
+                onClick={checkSecretWord}
+                className="bg-purple-500 hover:bg-purple-600 text-white font-medium py-2 px-4 rounded-r"
+              >
+                Vérifier
+              </button>
+            </div>
+          </div>
+          
+          <div className="mt-6">
+            <h3 className="font-medium text-gray-700 mb-2">Lieux d'intérêt à découvrir :</h3>
+            <ul className="list-disc pl-5 text-gray-600">
+              {locations.map((loc, index) => (
+                <li key={index} className={solvedLocations.includes(loc.name) ? "line-through text-green-600" : ""}>
+                  {loc.name}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      );
+    };
+
+    ReactDOM.render(<TreasureHunt />, document.getElementById('root'));
+  </script>
+</body>
+</html>
