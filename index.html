@@ -775,18 +775,17 @@
 
       // Vérifier le mot secret
       const checkSecretWord = () => {
-          // Le mot secret est "PARIS"
-          if (secretWord.toLowerCase() === "paris") {
-            // Au lieu d'afficher l'écran de félicitations, rediriger vers index.html
-            window.location.href = "index2.html"; 
-          } else if (secretWord.toLowerCase() === "debug") {
-            activateDebugMode();
-            setSecretWord('');
-          } else {
-            alert("Ce n'est pas le bon mot. Continuez à chercher !");
-            setSecretWord('');
-          }
-        };
+        // Le mot secret est "PARIS"
+        if (secretWord.toLowerCase() === "paris") {
+          setGameCompleted(true);
+        } else if (secretWord.toLowerCase() === "debug") {
+          activateDebugMode();
+          setSecretWord('');
+        } else {
+          alert("Ce n'est pas le bon mot. Continuez à chercher !");
+          setSecretWord('');
+        }
+      };
 
       // Obtenir les lettres trouvées
       const getFoundLetters = () => {
