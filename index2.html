@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BRAVO CHAMPION ! 🎉</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bungee+Shade&family=Bungee&family=Bungee+Inline&family=Rubik:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      background: linear-gradient(45deg, #ff00cc, #3333ff, #00ccff, #ff6600);
+      background-size: 400% 400%;
+      animation: gradientBackground 15s ease infinite;
+      font-family: 'Rubik', sans-serif;
+      overflow: hidden;
+      height: 100vh;
+      width: 100vw;
+      perspective: 1000px;
+    }
+    
+    @keyframes gradientBackground {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    
+    .container {
+      position: relative;
+      height: 100vh;
+      width: 100vw;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+      transform-style: preserve-3d;
+    }
+    
+    .title {
+      font-family: 'Bungee Shade', cursive;
+      font-size: 2.5rem;
+      color: #ffffff;
+      text-align: center;
+      text-shadow: 0 0 10px rgba(255, 255, 255, 0.5), 
+                   0 0 20px rgba(255, 255, 255, 0.5),
+                   0 0 30px rgba(255, 255, 255, 0.5);
+      transform: rotate(-2deg);
+      margin-bottom: 1rem;
+      animation: titlePulse 2s infinite;
+      transform-style: preserve-3d;
+      transition: transform 0.1s ease-out;
+    }
+    
+    @keyframes titlePulse {
+      0% { transform: rotate(-2deg) scale(1); }
+      50% { transform: rotate(2deg) scale(1.05); }
+      100% { transform: rotate(-2deg) scale(1); }
+    }
+    
+    .subtitle {
+      font-family: 'Bungee', cursive;
+      font-size: 1.5rem;
+      color: #ffffff;
+      text-align: center;
+      margin-bottom: 2rem;
+      animation: subtitleBounce 1s infinite alternate;
+      transform-style: preserve-3d;
+      transition: transform 0.1s ease-out;
+    }
+    
+    @keyframes subtitleBounce {
+      from { transform: translateY(0); }
+      to { transform: translateY(-10px); }
+    }
+    
+    .btn-maps {
+      font-family: 'Bungee Inline', cursive;
+      font-size: 1.2rem;
+      padding: 1rem 2rem;
+      background: linear-gradient(45deg, #ff6b6b, #ffa3a3);
+      color: white;
+      border: none;
+      border-radius: 50px;
+      cursor: pointer;
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s ease;
+      z-index: 20;
+      transform-style: preserve-3d;
+      transform: translateZ(40px);
+    }
+    
+    .btn-maps:before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+      transition: all 0.5s;
+    }
+    
+    .btn-maps:hover {
+      transform: translateY(-5px) translateZ(40px);
+      box-shadow: 0 15px 25px rgba(0, 0, 0, 0.4);
+    }
+    
+    .btn-maps:hover:before {
+      left: 100%;
+    }
+    
+    .btn-maps:active {
+      transform: translateY(0) translateZ(20px);
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    }
+    
+    .confetti {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      background: #f00;
+      animation: confetti 5s ease-in infinite;
+      transform-style: preserve-3d;
+    }
+    
+    @keyframes confetti {
+      0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+      100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+    }
+    
+    .bouncing-image {
+      position: absolute;
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background-size: cover;
+      background-position: center;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+      animation: bounce 10s infinite;
+      z-index: 5;
+      transform-style: preserve-3d;
+      transition: transform 0.1s ease-out;
+    }
+    
+    @keyframes bounce {
+      0%, 100% {
+        transform: translate(0, 0) rotate(0deg);
+        animation-timing-function: ease-out;
+      }
+      25% {
+        animation-timing-function: ease-in;
+      }
+      50% {
+        transform: translate(var(--x), var(--y)) rotate(var(--r));
+        animation-timing-function: ease-out;
+      }
+      75% {
+        animation-timing-function: ease-in;
+      }
+    }
+    
+    .emoji-rain {
+      position: absolute;
+      top: -50px;
+      animation: emojiRain 3s linear infinite;
+      z-index: 1;
+      font-size: 2rem;
+      opacity: 0.7;
+      transform-style: preserve-3d;
+    }
+    
+    @keyframes emojiRain {
+      0% { transform: translateY(0) rotate(0deg); opacity: 0.7; }
+      100% { transform: translateY(110vh) rotate(360deg); opacity: 0; }
+    }
+    
+    .rainbow-text {
+      font-family: 'Bungee', cursive;
+      font-size: 1.2rem;
+      background: linear-gradient(to right, red, orange, yellow, green, blue, indigo, violet);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      animation: rainbow 5s linear infinite;
+      margin-top: 2rem;
+      text-align: center;
+      transform-style: preserve-3d;
+      transform: translateZ(20px);
+      transition: transform 0.1s ease-out;
+    }
+    
+    @keyframes rainbow {
+      0% { background-position: 0 0; }
+      100% { background-position: 500% 0; }
+    }
+    
+    .glow {
+      position: absolute;
+      width: 200px;
+      height: 200px;
+      border-radius: 50%;
+      background: radial-gradient(ellipse at center, rgba(255,255,255,0.7) 0%, rgba(255,255,255,0) 70%);
+      animation: glow 5s infinite alternate;
+      z-index: 1;
+      pointer-events: none;
+      transform-style: preserve-3d;
+    }
+    
+    @keyframes glow {
+      0% { opacity: 0.4; transform: scale(1); }
+      100% { opacity: 0.7; transform: scale(1.2); }
+    }
+    
+    .blob {
+      position: absolute;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 50%;
+      filter: blur(30px);
+      z-index: 0;
+      animation: blob 15s infinite alternate;
+      transform-style: preserve-3d;
+      transition: transform 0.2s ease-out;
+    }
+    
+    @keyframes blob {
+      0% { transform: translate(0, 0) scale(1); }
+      33% { transform: translate(var(--bx1), var(--by1)) scale(1.2); }
+      66% { transform: translate(var(--bx2), var(--by2)) scale(0.8); }
+      100% { transform: translate(var(--bx3), var(--by3)) scale(1.1); }
+    }
+
+    /* Shake animation for device shake detection */
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      10%, 30%, 50%, 70%, 90% { transform: translateX(-10px); }
+      20%, 40%, 60%, 80% { transform: translateX(10px); }
+    }
+
+    .shake-animation {
+      animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+    }
+    
+    /* Explosion animation */
+    @keyframes explode {
+      0% { transform: scale(1); opacity: 1; }
+      100% { transform: scale(3); opacity: 0; }
+    }
+
+    .explosion {
+      position: absolute;
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255,255,255,1) 0%, rgba(255,228,0,0.7) 20%, rgba(255,0,0,0.5) 40%, rgba(255,0,0,0) 70%);
+      animation: explode 0.5s forwards;
+      z-index: 100;
+    }
+    
+    /* Responsiveness */
+    @media (max-width: 768px) {
+      .title {
+        font-size: 1.8rem;
+      }
+      
+      .subtitle {
+        font-size: 1.2rem;
+      }
+      
+      .bouncing-image {
+        width: 60px;
+        height: 60px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container" id="container">
+    <h1 class="title" id="title">BRAVO CHAMPION ! 🏆</h1>
+    <h2 class="subtitle" id="subtitle">Tu as trouvé le mot secret : PARIS</h2>
+    
+    <a href="https://goo.gl/maps/Zj4V8vEe4MfwTu3g8" target="_blank" class="btn-maps" id="btn-maps">
+      DIRECTION LE TRÉSOR 🗺️
+    </a>
+    
+    <p class="rainbow-text" id="rainbow-text">Prends une photo avec le trésor et envoie-la nous! 📸</p>
+  </div>
+  
+  <!-- Confetti container -->
+  <div id="confetti-container"></div>
+  
+  <!-- Blob backgrounds -->
+  <div class="blob" id="blob1" style="width: 300px; height: 300px; top: 20%; left: 10%; --bx1: 100px; --by1: 50px; --bx2: -50px; --by2: 100px; --bx3: 80px; --by3: -80px;"></div>
+  <div class="blob" id="blob2" style="width: 400px; height: 400px; top: 60%; left: 60%; --bx1: -120px; --by1: -70px; --bx2: 70px; --by2: -100px; --bx3: -60px; --by3: 90px;"></div>
+  <div class="blob" id="blob3" style="width: 250px; height: 250px; top: 30%; left: 70%; --bx1: -80px; --by1: 90px; --bx2: 100px; --by2: -60px; --bx3: 60px; --by3: 100px;"></div>
+  
+  <!-- Glowing spots -->
+  <div class="glow" id="glow1" style="top: 30%; left: 20%;"></div>
+  <div class="glow" id="glow2" style="top: 60%; left: 70%;"></div>
+  
+  <script>
+    // ===== Configuration =====
+    // Nombre total d'images à créer (même si nous n'avons que 2 images réelles)
+    const totalImages = 30;
+    
+    // Sensibilité du gyroscope (valeurs plus élevées = plus de mouvement)
+    const gyroSensitivity = 2.5;
+    
+    // Sensibilité de la détection de secousse
+    const shakeThreshold = 15;
+    
+    // Liste des emojis pour la pluie
+    const emojis = ['🎉', '🎊', '🥳', '🎈', '🎯', '🏆', '💯', '🔥', '👏', '⭐'];
+    
+    // Couleurs des confettis
+    const confettiColors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff'];
+    
+    // ===== Initialisation =====
+    let lastX = 0, lastY = 0, lastZ = 0;
+    let moveCounter = 0;
+    
+    // Create confetti
+    const confettiContainer = document.getElementById('confetti-container');
+    
+    for (let i = 0; i < 100; i++) {
+      const confetti = document.createElement('div');
+      confetti.className = 'confetti';
+      confetti.style.left = Math.random() * 100 + 'vw';
+      confetti.style.background = confettiColors[Math.floor(Math.random() * confettiColors.length)];
+      confetti.style.animationDelay = Math.random() * 5 + 's';
+      confetti.style.animationDuration = Math.random() * 3 + 3 + 's';
+      confetti.style.width = Math.random() * 10 + 5 + 'px';
+      confetti.style.height = Math.random() * 10 + 5 + 'px';
+      confettiContainer.appendChild(confetti);
+    }
+    
+    // Create bouncing images (using only 2 real images)
+    for (let i = 1; i <= totalImages; i++) {
+      const img = document.createElement('div');
+      img.className = 'bouncing-image';
+      
+      // Alterner entre image1.png et image2.png
+      const imageNumber = (i % 2) + 1;
+      img.style.backgroundImage = `url('images/image${imageNumber}.png')`;
+      
+      // Random start position
+      const startX = Math.random() * 80 + 10; // 10-90% of screen width
+      const startY = Math.random() * 80 + 10; // 10-90% of screen height
+      
+      // Random target position for bounce animation
+      const targetX = (Math.random() - 0.5) * 300;
+      const targetY = (Math.random() - 0.5) * 300;
+      const rotation = (Math.random() - 0.5) * 720;
+      
+      img.style.left = `${startX}vw`;
+      img.style.top = `${startY}vh`;
+      img.style.setProperty('--x', `${targetX}px`);
+      img.style.setProperty('--y', `${targetY}px`);
+      img.style.setProperty('--r', `${rotation}deg`);
+      
+      // Random animation duration and delay
+      img.style.animationDuration = `${Math.random() * 5 + 8}s`;
+      img.style.animationDelay = `${Math.random() * 2}s`;
+      
+      // Random z-index for 3D effect
+      img.style.transform = `translateZ(${Math.random() * 50}px)`;
+      
+      document.body.appendChild(img);
+    }
+    
+    // Create emoji rain
+    for (let i = 0; i < 30; i++) {
+      const emoji = document.createElement('div');
+      emoji.className = 'emoji-rain';
+      emoji.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+      emoji.style.left = Math.random() * 100 + 'vw';
+      emoji.style.animationDelay = Math.random() * 15 + 's';
+      emoji.style.animationDuration = Math.random() * 3 + 2 + 's';
+      emoji.style.transform = `translateZ(${Math.random() * 30}px)`;
+      document.body.appendChild(emoji);
+    }
+    
+    // ===== Gyroscope Effects =====
+    function handleOrientation(event) {
+      // Récupérer les données du gyroscope
+      const beta = event.beta; // Inclinaison avant/arrière (-180° à 180°)
+      const gamma = event.gamma; // Inclinaison gauche/droite (-90° à 90°)
+      
+      // Normaliser les valeurs pour un effet de parallaxe doux
+      const xAxis = Math.min(Math.max(gamma / 45, -1), 1) * gyroSensitivity;
+      const yAxis = Math.min(Math.max(beta / 45, -1), 1) * gyroSensitivity;
+      
+      // Appliquer l'effet aux éléments avec différents facteurs pour le parallaxe
+      applyParallaxEffect(xAxis, yAxis);
+    }
+    
+    function applyParallaxEffect(xAxis, yAxis) {
+      // Éléments avec effet parallaxe
+      const title = document.getElementById('title');
+      const subtitle = document.getElementById('subtitle');
+      const rainbowText = document.getElementById('rainbow-text');
+      const btnMaps = document.getElementById('btn-maps');
+      const blob1 = document.getElementById('blob1');
+      const blob2 = document.getElementById('blob2');
+      const blob3 = document.getElementById('blob3');
+      const bouncingImages = document.querySelectorAll('.bouncing-image');
+      
+      // Appliquer le mouvement aux éléments principaux
+      if (title) title.style.transform = `rotateY(${xAxis * 5}deg) rotateX(${-yAxis * 5}deg)`;
+      if (subtitle) subtitle.style.transform = `translateY(-5px) rotateY(${xAxis * 3}deg) rotateX(${-yAxis * 3}deg)`;
+      if (rainbowText) rainbowText.style.transform = `translateZ(20px) rotateY(${xAxis * 2}deg) rotateX(${-yAxis * 2}deg)`;
+      if (btnMaps) btnMaps.style.transform = `translateZ(40px) rotateY(${xAxis * 10}deg) rotateX(${-yAxis * 10}deg)`;
+      
+      // Appliquer un mouvement plus exagéré aux blobs en arrière-plan
+      if (blob1) blob1.style.transform = `translate(${xAxis * 20}px, ${yAxis * 20}px)`;
+      if (blob2) blob2.style.transform = `translate(${-xAxis * 30}px, ${-yAxis * 30}px)`;
+      if (blob3) blob3.style.transform = `translate(${xAxis * 15}px, ${-yAxis * 15}px)`;
+      
+      // Appliquer un effet aux images rebondissantes
+      bouncingImages.forEach((img, i) => {
+        const depth = ((i % 5) + 1) * 5; // Profondeur variable
+        const translateX = xAxis * depth * 2;
+        const translateY = yAxis * depth * 2;
+        
+        // Ajouter ce mouvement au mouvement d'animation existant 
+        img.style.transform = `translateX(${translateX}px) translateY(${translateY}px) translateZ(${depth}px)`;
+      });
+    }
+    
+    // ===== Détection de secousse =====
+    function handleMotion(event) {
+      const accelerationWithG = event.accelerationIncludingGravity;
+      
+      // Certains navigateurs ne fournissent pas ces valeurs
+      if (!accelerationWithG) return;
+      
+      const x = accelerationWithG.x;
+      const y = accelerationWithG.y;
+      const z = accelerationWithG.z;
+      
+      if (!lastX) {
+        lastX = x;
+        lastY = y;
+        lastZ = z;
+        return;
+      }
+      
+      // Calculer le changement de force
+      const deltaX = Math.abs(lastX - x);
+      const deltaY = Math.abs(lastY - y);
+      const deltaZ = Math.abs(lastZ - z);
+      
+      // Si le changement est supérieur au seuil, déclencher l'effet de secousse
+      if ((deltaX + deltaY + deltaZ) > shakeThreshold) {
+        // Limiter la fréquence des secousses
+        moveCounter++;
+        if (moveCounter > 2) {
+          triggerShakeEffect();
+          moveCounter = 0;
+        }
+      }
+      
+      lastX = x;
+      lastY = y;
+      lastZ = z;
+    }
+    
+    function triggerShakeEffect() {
+      // Ajouter l'animation de secousse au corps
+      document.body.classList.add('shake-animation');
+      
+      // Ajouter des explosions à des emplacements aléatoires
+      for (let i = 0; i < 5; i++) {
+        setTimeout(() => {
+          createExplosion(
+            Math.random() * window.innerWidth, 
+            Math.random() * window.innerHeight
+          );
+        }, i * 100);
+      }
+      
+      // Créer de nouveaux emojis qui pleuvent
+      createBurstEmojis(10);
+      
+      // Retirer l'animation après une seconde
+      setTimeout(() => {
+        document.body.classList.remove('shake-animation');
+      }, 500);
+    }
+    
+    function createExplosion(x, y) {
+      const explosion = document.createElement('div');
+      explosion.className = 'explosion';
+      explosion.style.left = `${x}px`;
+      explosion.style.top = `${y}px`;
+      document.body.appendChild(explosion);
+      
+      // Supprimer après que l'animation soit terminée
+      setTimeout(() => {
+        explosion.remove();
+      }, 500);
+    }
+    
+    function createBurstEmojis(count) {
+      for (let i = 0; i < count; i++) {
+        const emoji = document.createElement('div');
+        emoji.className = 'emoji-rain';
+        emoji.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+        emoji.style.left = Math.random() * 100 + 'vw';
+        emoji.style.top = Math.random() * 30 + 'vh'; // Start from higher in the screen
+        emoji.style.animationDelay = '0s'; // Start immediately
+        emoji.style.animationDuration = Math.random() * 2 + 1 + 's'; // Faster fall
+        document.body.appendChild(emoji);
+      }
+    }
+    
+    // ===== Initialisation des capteurs =====
+    // Vérifier et demander l'accès aux capteurs sur les appareils mobiles
+    function initSensors() {
+      // Détecter si la page est chargée dans un navigateur mobile
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      
+      if (isMobile) {
+        // Vérifier si le navigateur prend en charge DeviceOrientationEvent
+        if (window.DeviceOrientationEvent) {
+          // Pour iOS 13+, nous devons demander la permission
+          if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+            // Ajouter un bouton pour demander la permission
+            const permissionBtn = document.createElement('button');
+            permissionBtn.textContent = "Activer les effets spéciaux 🚀";
+            permissionBtn.style.position = "fixed";
+            permissionBtn.style.bottom = "20px";
+            permissionBtn.style.left = "50%";
+            permissionBtn.style.transform = "translateX(-50%)";
+            permissionBtn.style.padding = "10px 20px";
+            permissionBtn.style.background = "#00BFFF";
+            permissionBtn.style.color = "white";
+            permissionBtn.style.border = "none";
+            permissionBtn.style.borderRadius = "30px";
+            permissionBtn.style.fontSize = "16px";
+            permissionBtn.style.boxShadow = "0 4px 10px rgba(0,0,0,0.3)";
+            permissionBtn.style.zIndex = "1000";
+            
+            permissionBtn.addEventListener('click', function() {
+              DeviceOrientationEvent.requestPermission()
+                .then(response => {
+                  if (response === 'granted') {
+                    // Permission accordée, ajouter les écouteurs d'événements
+                    window.addEventListener('deviceorientation', handleOrientation);
+                    window.addEventListener('devicemotion', handleMotion);
+                    this.remove(); // Supprimer le bouton
+                    
+                    // Ajouter un effet spécial pour montrer que ça fonctionne
+                    triggerShakeEffect();
+                  }
+                })
+                .catch(console.error);
+            });
+            
+            document.body.appendChild(permissionBtn);
+          } else {
+            // Pour les autres navigateurs, pas besoin de permission
+            window.addEventListener('deviceorientation', handleOrientation);
+            window.addEventListener('devicemotion', handleMotion);
+          }
+        }
+      } else {
+        // Sur desktop, utiliser la souris pour simuler les effets de parallaxe
+        document.addEventListener('mousemove', (e) => {
+          const xAxis = (e.clientX / window.innerWidth - 0.5) * 2;
+          const yAxis = (e.clientY / window.innerHeight - 0.5) * 2;
+          
+          applyParallaxEffect(xAxis, yAxis);
+          
+          // Aussi mettre à jour les effets de lueur
+          const glows = document.querySelectorAll('.glow');
+          if (glows[0]) {
+            glows[0].style.left = e.clientX - 100 + 'px';
+            glows[0].style.top = e.clientY - 100 + 'px';
+          }
+        });
+        
+        // Ajouter un événement de clic qui déclenche l'effet de secousse
+        document.addEventListener('click', () => {
+          triggerShakeEffect();
+        });
+      }
+    }
+    
+    // ===== Event Listeners =====
+    window.addEventListener('load', () => {
+      // Initialiser les capteurs
+      initSensors();
+      
+      // Ajouter un effet de secousse initiale
+      setTimeout(() => {
+        triggerShakeEffect();
+      }, 1000);
+    });
+    
+    // Effet de secousse lors du clic sur le bouton
+    const button = document.querySelector('.btn-maps');
+    if (button) {
+      button.addEventListener('click', (e) => {
+        // Ne pas bloquer la navigation
+        e.stopPropagation();
+        
+        // Ajouter un effet de lueur sur le bouton
+        const glows = document.querySelectorAll('.glow');
+        if (glows[1]) {
+          glows[1].style.left = button.offsetLeft + (button.offsetWidth / 2) - 100 + 'px';
+          glows[1].style.top = button.offsetTop + (button.offsetHeight / 2) - 100 + 'px';
+          glows[1].style.opacity = '1';
+        }
+      });
+    }
+  </script>
+</body>
+</html>

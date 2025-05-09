@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TEST</title>
+  <title>Chasse au trésor GPS</title>
   <script src="https://unpkg.com/react@17/umd/react.production.min.js"></script>
   <script src="https://unpkg.com/react-dom@17/umd/react-dom.production.min.js"></script>
   <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
@@ -385,7 +385,7 @@
         if (fillPercentage >= 70) {
           setIsSolved(true);
           if (onSolve) {
-            onSolve("I"); // Retourne la lettre "I" correspondant à l'énigme de la grotte
+            onSolve("A"); // Retourne la lettre "A" correspondant à l'énigme de la grotte
           }
         } else {
           alert(`La grille est remplie à ${Math.round(fillPercentage)}%, il faut au moins 70% pour valider. Continuez !`);
@@ -409,7 +409,7 @@
           {isSolved ? (
             <div className="bg-green-100 p-4 rounded text-green-800 mb-4">
               <p className="font-bold">Bravo ! Vous avez résolu le mot croisé.</p>
-              <p>Vous avez obtenu la lettre : <span className="text-2xl font-bold">I</span></p>
+              <p>Vous avez obtenu la lettre : <span className="text-2xl font-bold">A</span></p>
             </div>
           ) : (
             <div className="mb-4">
@@ -541,7 +541,7 @@
       const [solvedLocations, setSolvedLocations] = React.useState([]);
       const [secretWord, setSecretWord] = React.useState('');
       const [gameCompleted, setGameCompleted] = React.useState(false);
-      const [defaultQuestion, setDefaultQuestion] = React.useState(true);
+      const [defaultQuestion, setDefaultQuestion] = React.useState(false); // Suppression de la question de test par défaut
       const [debugMode, setDebugMode] = React.useState(false);
       const [selectedDebugLocation, setSelectedDebugLocation] = React.useState(null);
 
@@ -560,7 +560,7 @@
         }
       }, [solvedLocations]);
       
-      // Liste des lieux avec grotte modifiée pour utiliser le mot croisé
+      // Liste des lieux avec les lettres modifiées pour former "PARIS"
       const locations = [
         { 
           name: "Barques", 
@@ -574,7 +574,7 @@
             "79,00€"
           ],
           answer: "39,50", 
-          letter: "E",
+          letter: "S", // Modifié: E → S
           image: "https://picsum.photos/seed/barques/400/300" 
         },
         { 
@@ -589,17 +589,17 @@
             "Cygne"
           ],
           answer: "Oie de Guinée", 
-          letter: "N",
+          letter: "R", // Modifié: N → R
           image: "https://picsum.photos/seed/paons/400/300" 
         },
         { 
           name: "Grotte", 
           lat: 48.83003, 
           lng: 2.41575,
-          usesCrossword: true, // Nouveau paramètre pour indiquer qu'on utilise un mot croisé
+          usesCrossword: true, // Paramètre pour indiquer qu'on utilise un mot croisé
           question: "Complétez le mot croisé pour obtenir la lettre", 
           answer: "", // Pas besoin de réponse car géré par le composant de mot croisé
-          letter: "I",
+          letter: "A", // Modifié: I → A
           image: "https://picsum.photos/seed/grotte/400/300" 
         },
         { 
@@ -614,7 +614,7 @@
             "10"
           ],
           answer: "10", 
-          letter: "G",
+          letter: "P", // Modifié: G → P
           image: "https://picsum.photos/seed/pelerins/400/300" 
         },
         { 
@@ -629,7 +629,7 @@
             "Oui en 1860"
           ],
           answer: "Oui en 1860", 
-          letter: "M",
+          letter: "I", // Modifié: M → I
           image: "https://picsum.photos/seed/pontsud/400/300" 
         }
       ];
@@ -673,7 +673,7 @@
           setDefaultQuestion(false);
         } else {
           setNearbyLocation(null);
-          setDefaultQuestion(true);
+          setDefaultQuestion(false); // Changé de true à false pour supprimer la question de test
         }
       };
 
@@ -775,17 +775,18 @@
 
       // Vérifier le mot secret
       const checkSecretWord = () => {
-        // Le mot secret est "ENIGME"
-        if (secretWord.toLowerCase() === "enigme") {
-          setGameCompleted(true);
-        } else if (secretWord.toLowerCase() === "debug") {
-          activateDebugMode();
-          setSecretWord('');
-        } else {
-          alert("Ce n'est pas le bon mot. Continuez à chercher !");
-          setSecretWord('');
-        }
-      };
+          // Le mot secret est "PARIS"
+          if (secretWord.toLowerCase() === "paris") {
+            // Au lieu d'afficher l'écran de félicitations, rediriger vers index.html
+            window.location.href = "index2.html"; 
+          } else if (secretWord.toLowerCase() === "debug") {
+            activateDebugMode();
+            setSecretWord('');
+          } else {
+            alert("Ce n'est pas le bon mot. Continuez à chercher !");
+            setSecretWord('');
+          }
+        };
 
       // Obtenir les lettres trouvées
       const getFoundLetters = () => {
@@ -796,41 +797,6 @@
           }
         });
         return letters;
-      };
-
-      // Affichage de la question par défaut lorsqu'on n'est pas à proximité d'un lieu
-      const renderDefaultQuestion = () => {
-        return (
-          <div className="bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded mb-4">
-            <h3 className="font-bold text-lg mb-2">Question de test</h3>
-            <p className="mb-2">Quel est le contraire de "froid" ?</p>
-            <img 
-              src="https://picsum.photos/seed/test/400/300" 
-              alt="Test" 
-              className="w-full h-40 object-cover rounded mb-3"
-            />
-            <input
-              type="text"
-              value={userAnswer}
-              onChange={(e) => setUserAnswer(e.target.value)}
-              placeholder="Votre réponse"
-              className="w-full p-2 border rounded mb-2"
-            />
-            <button 
-              onClick={() => {
-                if (userAnswer.toLowerCase().trim() === "chaud") {
-                  alert("Correct ! C'est juste une question de test pour vous montrer comment le jeu fonctionne.");
-                } else {
-                  alert("Incorrect. Essayez 'chaud'.");
-                }
-                setUserAnswer('');
-              }}
-              className="w-full bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded"
-            >
-              Valider
-            </button>
-          </div>
-        );
       };
 
       // Page de victoire
@@ -933,8 +899,6 @@
               </div>
             </div>
           )}
-          
-          {currentPosition && defaultQuestion && !debugMode && renderDefaultQuestion()}
           
           {nearbyLocation && !defaultQuestion && (
             <div className={`${solvedLocations.includes(nearbyLocation.name) ? 'bg-green-100 border-green-400 text-green-700' : 'bg-yellow-100 border-yellow-400 text-yellow-700'} border px-4 py-3 rounded mb-4`}>
