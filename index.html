@@ -32,6 +32,62 @@
       max-width: 300px;
       margin: 0 auto;
     }
+    /* Animation pour cœur qui bat */
+    @keyframes heartbeat {
+      0% { transform: scale(1); }
+      25% { transform: scale(1.1); }
+      50% { transform: scale(1); }
+      75% { transform: scale(1.1); }
+      100% { transform: scale(1); }
+    }
+    .heartbeat {
+      animation: heartbeat 1s infinite;
+      display: inline-block;
+    }
+    .hearts-container {
+      display: flex;
+      gap: 0.25rem;
+    }
+    /* Animation pour cœur perdu */
+    @keyframes heartLost {
+      0% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.5); opacity: 0.5; }
+      100% { transform: scale(0); opacity: 0; }
+    }
+    .heart-lost {
+      animation: heartLost 0.5s forwards;
+    }
+    /* Animation pour cœur gagné */
+    @keyframes heartGained {
+      0% { transform: scale(0); opacity: 0; }
+      50% { transform: scale(1.5); opacity: 0.5; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .heart-gained {
+      animation: heartGained 0.5s forwards;
+    }
+    /* Modal de perte de vie */
+    .life-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.7);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+    .modal-content {
+      background-color: white;
+      padding: 2rem;
+      border-radius: 1rem;
+      text-align: center;
+      max-width: 90%;
+      width: 400px;
+      box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+    }
   </style>
 </head>
 <body class="bg-gray-100">
@@ -39,12 +95,13 @@
   
   <script type="text/babel">
     // Composant de mot croisé
-    const CrosswordPuzzle = ({ onSolve, debugMode }) => {
+    const CrosswordPuzzle = ({ onSolve, onWrongAnswer, debugMode }) => {
       const [userAnswers, setUserAnswers] = React.useState([]);
       const [isSolved, setIsSolved] = React.useState(false);
       const [gridData, setGridData] = React.useState(null);
       const [focusedCell, setFocusedCell] = React.useState(null);
       const [error, setError] = React.useState(null);
+      const [attemptsLeft, setAttemptsLeft] = React.useState(3); // On donne 3 essais pour le mot croisé
       
       // Initialisation de la grille
       React.useEffect(() => {
@@ -388,7 +445,16 @@
             onSolve("A"); // Retourne la lettre "A" correspondant à l'énigme de la grotte
           }
         } else {
-          alert(`La grille est remplie à ${Math.round(fillPercentage)}%, il faut au moins 70% pour valider. Continuez !`);
+          // Perdre une vie si la solution n'est pas correcte
+          if (attemptsLeft > 0) {
+            setAttemptsLeft(attemptsLeft - 1);
+            if (onWrongAnswer) {
+              onWrongAnswer();
+            }
+            alert(`La grille est remplie à ${Math.round(fillPercentage)}%, il faut au moins 70% pour valider. Il vous reste ${attemptsLeft - 1} essai(s).`);
+          } else {
+            alert("Vous n'avez plus d'essais disponibles. Regagnez des vies pour réessayer.");
+          }
         }
       };
       
@@ -416,14 +482,17 @@
               <p className="text-gray-700 mb-2">
                 Remplissez le mot croisé pour débloquer l'indice de la grotte.
               </p>
-              {debugMode && (
-                <button 
-                  onClick={fillAllAnswers}
-                  className="mt-2 bg-red-500 hover:bg-red-600 text-white font-bold py-1 px-2 rounded text-sm"
-                >
-                  Triche complète
-                </button>
-              )}
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-sm text-gray-600">Essais restants: {attemptsLeft}</span>
+                {debugMode && (
+                  <button 
+                    onClick={fillAllAnswers}
+                    className="mt-2 bg-red-500 hover:bg-red-600 text-white font-bold py-1 px-2 rounded text-sm"
+                  >
+                    Triche complète
+                  </button>
+                )}
+              </div>
             </div>
           )}
           
@@ -464,7 +533,7 @@
                             value={userAnswers[rowIndex] && userAnswers[rowIndex][colIndex] ? userAnswers[rowIndex][colIndex] : ""}
                             onChange={(e) => handleInputChange(rowIndex, colIndex, e.target.value)}
                             onKeyDown={(e) => handleKeyDown(e, rowIndex, colIndex)}
-                            disabled={isSolved}
+                            disabled={isSolved || attemptsLeft === 0}
                           />
                         )}
                       </div>
@@ -472,13 +541,19 @@
                   ))}
                 </div>
                 
-                {!isSolved && (
+                {!isSolved && attemptsLeft > 0 && (
                   <button 
                     onClick={checkSolution}
                     className="mt-4 w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded"
                   >
                     Vérifier la solution
                   </button>
+                )}
+                
+                {!isSolved && attemptsLeft === 0 && (
+                  <div className="mt-4 bg-red-100 p-3 rounded border border-red-300 text-red-700 text-center">
+                    <p>Vous n'avez plus d'essais. Regagnez des vies pour continuer.</p>
+                  </div>
                 )}
               </div>
             </div>
@@ -530,6 +605,65 @@
       );
     };
 
+    // Composant modal pour envoyer un compliment
+    const ComplimentModal = ({ onClose, onLifeGained }) => {
+      const compliments = [
+        "Loïs, tu es vraiment l'esprit le plus brillant que je connaisse et un ami hors pair.",
+        "Loïs, ta bienveillance illumine chaque instant et rend la vie plus douce.",
+        "Loïs, j'admire ta sagesse et ta loyauté : tu es un trésor d'amitié.",
+        "Loïs, ta présence transforme les pires journées en moments magiques.",
+        "Loïs, tu as un cœur en or et ta générosité n'a d'égale que ta joie de vivre.",
+        "Loïs, tu es l'exemple parfait d'un ami fidèle sur qui on peut toujours compter.",
+        "Loïs, ta créativité et ton empathie font de toi un allié incomparable.",
+        "Loïs, ton intelligence et ton humour font de chaque conversation un pur bonheur.",
+        "Loïs, ta force tranquille et ton soutien sont un cadeau pour ceux qui t'entourent.",
+        "Loïs, tu incarnes l'amitié idéale : sincère, généreuse et inspirante."
+      ];
+      
+      const sendCompliment = () => {
+        // Choix aléatoire
+        const randomIndex = Math.floor(Math.random() * compliments.length);
+        const message = compliments[randomIndex];
+        
+        // Envoyer le SMS
+        window.location.href = `sms:+33634481088?body=${encodeURIComponent(message)}`;
+        
+        // Notifier que la vie est gagnée
+        setTimeout(() => {
+          onLifeGained();
+          onClose();
+        }, 500);
+      };
+      
+      return (
+        <div className="life-modal">
+          <div className="modal-content">
+            <h3 className="text-xl font-bold mb-4">Regagner une vie ❤️</h3>
+            <p className="mb-4">Envoie un compliment à Loïs pour regagner une vie et continuer l'aventure !</p>
+            
+            <div className="flex space-x-2 justify-center mb-4">
+              <button 
+                onClick={sendCompliment}
+                className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition"
+              >
+                Envoyer un compliment
+              </button>
+              <button 
+                onClick={onClose}
+                className="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 transition"
+              >
+                Annuler
+              </button>
+            </div>
+            
+            <p className="text-xs text-gray-500">
+              Un SMS sera automatiquement préparé avec un compliment aléatoire. Tu n'auras plus qu'à l'envoyer !
+            </p>
+          </div>
+        </div>
+      );
+    };
+
     // Application principale de chasse au trésor
     const TreasureHunt = () => {
       const [currentPosition, setCurrentPosition] = React.useState(null);
@@ -540,25 +674,80 @@
       const [userAnswer, setUserAnswer] = React.useState('');
       const [solvedLocations, setSolvedLocations] = React.useState([]);
       const [secretWord, setSecretWord] = React.useState('');
-      const [gameCompleted, setGameCompleted] = React.useState(false);
-      const [defaultQuestion, setDefaultQuestion] = React.useState(false); // Suppression de la question de test par défaut
       const [debugMode, setDebugMode] = React.useState(false);
       const [selectedDebugLocation, setSelectedDebugLocation] = React.useState(null);
+      const [lives, setLives] = React.useState(3); // Vies par défaut
+      const [showComplimentModal, setShowComplimentModal] = React.useState(false);
+      const [showLifeLostModal, setShowLifeLostModal] = React.useState(false);
 
-      // Charger les lieux résolus depuis localStorage au démarrage
+      // Charger les données depuis les cookies au démarrage
       React.useEffect(() => {
         const savedLocations = localStorage.getItem('solvedLocations');
         if (savedLocations) {
           setSolvedLocations(JSON.parse(savedLocations));
         }
+        
+        // Charger le nombre de vies depuis les cookies
+        const savedLives = getCookie('lives');
+        if (savedLives) {
+          setLives(parseInt(savedLives));
+        } else {
+          // Si pas de cookie, initialiser à 3 vies
+          setCookie('lives', 3, 7); // Expire dans 7 jours
+        }
       }, []);
 
-      // Sauvegarder les lieux résolus dans localStorage à chaque mise à jour
+      // Sauvegarder les données dans localStorage à chaque mise à jour
       React.useEffect(() => {
         if (solvedLocations.length > 0) {
           localStorage.setItem('solvedLocations', JSON.stringify(solvedLocations));
         }
       }, [solvedLocations]);
+      
+      // Sauvegarder les vies dans les cookies à chaque mise à jour
+      React.useEffect(() => {
+        setCookie('lives', lives, 7); // Expire dans 7 jours
+      }, [lives]);
+      
+      // Fonctions pour gérer les cookies
+      const setCookie = (name, value, days) => {
+        let expires = "";
+        if (days) {
+          const date = new Date();
+          date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+          expires = "; expires=" + date.toUTCString();
+        }
+        document.cookie = name + "=" + value + expires + "; path=/";
+      };
+      
+      const getCookie = (name) => {
+        const nameEQ = name + "=";
+        const ca = document.cookie.split(';');
+        for (let i = 0; i < ca.length; i++) {
+          let c = ca[i];
+          while (c.charAt(0) === ' ') c = c.substring(1, c.length);
+          if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
+        }
+        return null;
+      };
+      
+      // Fonction pour perdre une vie
+      const loseLife = () => {
+        if (lives > 0) {
+          setLives(lives - 1);
+          setShowLifeLostModal(true);
+          
+          // Fermer la modal après 2 secondes
+          setTimeout(() => {
+            setShowLifeLostModal(false);
+          }, 2000);
+        }
+      };
+      
+      // Fonction pour gagner une vie
+      const gainLife = () => {
+        setLives(lives + 1);
+      };
       
       // Liste des lieux avec les lettres modifiées pour former "PARIS"
       const locations = [
@@ -670,10 +859,8 @@
         // Considérer comme "proche" si moins de 100 mètres
         if (minDistance < 100) {
           setNearbyLocation(closestLocation);
-          setDefaultQuestion(false);
         } else {
           setNearbyLocation(null);
-          setDefaultQuestion(false); // Changé de true à false pour supprimer la question de test
         }
       };
 
@@ -719,10 +906,7 @@
 
       // Vérifier la réponse de l'utilisateur
       const checkAnswer = () => {
-        if (!nearbyLocation) return;
-        
-        console.log("Réponse utilisateur:", userAnswer);
-        console.log("Réponse attendue:", nearbyLocation.answer);
+        if (!nearbyLocation || lives <= 0) return;
         
         const isCorrect = userAnswer === nearbyLocation.answer;
         
@@ -739,7 +923,9 @@
         } else if (isCorrect) {
           alert("Vous avez déjà résolu cette énigme !");
         } else {
-          alert("Réponse incorrecte. Essayez encore !");
+          // Perdre une vie si la réponse est incorrecte
+          loseLife();
+          alert("Réponse incorrecte. Vous perdez une vie !");
         }
         
         setUserAnswer('');
@@ -763,30 +949,30 @@
       // Mode DEBUG pour tester toutes les questions
       const activateDebugMode = () => {
         setDebugMode(true);
-        alert("MODE DEBUG ACTIVÉ ! Vous pouvez maintenant sélectionner un lieu à tester.");
+        alert("MODE DEBUG ACTIVÉ ! Vous pouvez maintenant sélectionner un lieu à tester et ajouter des vies.");
       };
       
       // Sélectionner un lieu en mode DEBUG
       const selectDebugLocation = (location) => {
         setSelectedDebugLocation(location);
         setNearbyLocation(location);
-        setDefaultQuestion(false);
       };
 
       // Vérifier le mot secret
       const checkSecretWord = () => {
-      // Le mot secret est "PARIS"
-      if (secretWord.toLowerCase() === "paris") {
-        // Au lieu d'afficher l'écran de félicitations, rediriger vers index.html
-        window.location.href = "index2.html"; 
-      } else if (secretWord.toLowerCase() === "debug") {
-        activateDebugMode();
-        setSecretWord('');
-      } else {
-        alert("Ce n'est pas le bon mot. Continuez à chercher !");
-        setSecretWord('');
-      }
-    };
+        // Le mot secret est "PARIS"
+        if (secretWord.toLowerCase() === "paris") {
+          window.location.href = "index.html"; // Redirection vers la page de célébration
+        } else if (secretWord.toLowerCase() === "debug") {
+          activateDebugMode();
+          setSecretWord('');
+        } else {
+          // Perdre une vie pour mauvaise tentative
+          loseLife();
+          alert("Ce n'est pas le bon mot. Vous perdez une vie !");
+          setSecretWord('');
+        }
+      };
 
       // Obtenir les lettres trouvées
       const getFoundLetters = () => {
@@ -799,9 +985,37 @@
         return letters;
       };
 
-
+      // Rendu du composant principal
       return (
-        <div className="p-4 max-w-md mx-auto bg-white rounded-xl shadow-md overflow-hidden">
+        <div className="p-4 max-w-md mx-auto bg-white rounded-xl shadow-md overflow-hidden relative">
+          {/* Barre de vie */}
+          <div className="absolute top-2 right-2 flex items-center">
+            <div className="hearts-container mr-2">
+              {Array.from({ length: lives }).map((_, i) => (
+                <span key={i} className="text-red-500 text-xl heartbeat">❤️</span>
+              ))}
+              {Array.from({ length: Math.max(0, 5 - lives) }).map((_, i) => (
+                <span key={i} className="text-gray-300 text-xl">🖤</span>
+              ))}
+            </div>
+            <button 
+              onClick={() => setShowComplimentModal(true)}
+              className="bg-pink-500 hover:bg-pink-600 text-white text-xs rounded-full p-1"
+              title="Gagner une vie"
+            >
+              +
+            </button>
+            {debugMode && (
+              <button 
+                onClick={() => setLives(Math.min(5, lives + 1))}
+                className="ml-1 bg-purple-500 hover:bg-purple-600 text-white text-xs rounded-full p-1"
+                title="DEBUG: Ajouter une vie"
+              >
+                +D
+              </button>
+            )}
+          </div>
+          
           <h2 className="text-xl font-bold text-gray-800 mb-4">Chasse au trésor GPS</h2>
           
           {permissionStatus === 'pending' && (
@@ -873,7 +1087,7 @@
             </div>
           )}
           
-          {nearbyLocation && !defaultQuestion && (
+          {nearbyLocation && (
             <div className={`${solvedLocations.includes(nearbyLocation.name) ? 'bg-green-100 border-green-400 text-green-700' : 'bg-yellow-100 border-yellow-400 text-yellow-700'} border px-4 py-3 rounded mb-4`}>
               <h3 className="font-bold">{nearbyLocation.name}</h3>
               
@@ -884,7 +1098,11 @@
                     <p>Énigme résolue ! Vous avez obtenu la lettre : <span className="font-bold text-xl">{nearbyLocation.letter}</span></p>
                   </div>
                 ) : (
-                  <CrosswordPuzzle onSolve={handleCrosswordSolve} debugMode={debugMode} />
+                  <CrosswordPuzzle 
+                    onSolve={handleCrosswordSolve} 
+                    onWrongAnswer={loseLife}
+                    debugMode={debugMode} 
+                  />
                 )
               ) : (
                 <div>
@@ -901,6 +1119,17 @@
                   {solvedLocations.includes(nearbyLocation.name) ? (
                     <div className="bg-white p-3 rounded">
                       <p>Énigme résolue ! Vous avez obtenu la lettre : <span className="font-bold text-xl">{nearbyLocation.letter}</span></p>
+                    </div>
+                  ) : lives <= 0 ? (
+                    <div className="bg-red-100 p-3 rounded text-center">
+                      <p className="text-red-700 font-bold">Vous n'avez plus de vies !</p>
+                      <p className="text-red-600 text-sm mb-2">Envoyez un compliment à Loïs pour regagner une vie</p>
+                      <button 
+                        onClick={() => setShowComplimentModal(true)}
+                        className="bg-pink-500 hover:bg-pink-600 text-white px-4 py-2 rounded"
+                      >
+                        Regagner une vie
+                      </button>
                     </div>
                   ) : (
                     <div>
@@ -972,14 +1201,22 @@
                 onChange={(e) => setSecretWord(e.target.value)}
                 placeholder="Entrez le mot secret"
                 className="flex-grow p-2 border rounded-l"
+                disabled={lives <= 0}
               />
               <button 
                 onClick={checkSecretWord}
-                className="bg-purple-500 hover:bg-purple-600 text-white font-medium py-2 px-4 rounded-r"
+                className={`bg-purple-500 hover:bg-purple-600 text-white font-medium py-2 px-4 rounded-r ${lives <= 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
+                disabled={lives <= 0}
               >
                 Vérifier
               </button>
             </div>
+            
+            {lives <= 0 && (
+              <div className="mt-2 text-center text-red-600 text-sm">
+                <p>Vous n'avez plus de vies. Regagnez des vies pour continuer.</p>
+              </div>
+            )}
           </div>
           
           <div className="mt-6">
@@ -992,6 +1229,36 @@
               ))}
             </ul>
           </div>
+          
+          {/* Modal pour gagner une vie */}
+          {showComplimentModal && (
+            <ComplimentModal 
+              onClose={() => setShowComplimentModal(false)}
+              onLifeGained={gainLife}
+            />
+          )}
+          
+          {/* Modal de perte de vie */}
+          {showLifeLostModal && (
+            <div className="life-modal">
+              <div className="modal-content bg-red-100">
+                <div className="text-4xl mb-2">💔</div>
+                <h3 className="text-xl font-bold mb-2 text-red-700">Vous avez perdu une vie!</h3>
+                <p className="mb-3">Il vous reste {lives} vie(s).</p>
+                {lives === 0 && (
+                  <button 
+                    onClick={() => {
+                      setShowLifeLostModal(false);
+                      setShowComplimentModal(true);
+                    }}
+                    className="bg-pink-500 hover:bg-pink-600 text-white px-4 py-2 rounded"
+                  >
+                    Regagner une vie
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       );
     };
