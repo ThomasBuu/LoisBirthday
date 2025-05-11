@@ -88,12 +88,87 @@
       width: 400px;
       box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
     }
+    /* Style pour le bouton MAP */
+    .map-button {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 100;
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background-color: #3B82F6;
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .map-button:hover {
+      background-color: #2563EB;
+      transform: scale(1.05);
+    }
+    /* Modal de carte */
+    .map-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.8);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+    .map-modal-content {
+      position: relative;
+      max-width: 90%;
+      max-height: 90%;
+      overflow: auto;
+      border-radius: 0.5rem;
+      background-color: white;
+    }
+    .map-modal-content img {
+      max-width: 100%;
+      display: block;
+    }
+    .close-button {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background-color: rgba(255, 255, 255, 0.8);
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
   </style>
 </head>
 <body class="bg-gray-100">
   <div id="root"></div>
   
   <script type="text/babel">
+    // Composant de Modal pour la carte
+    const MapModal = ({ onClose }) => {
+      return (
+        <div className="map-modal" onClick={onClose}>
+          <div className="map-modal-content" onClick={(e) => e.stopPropagation()}>
+            <img src="images/map.png" alt="Carte du trésor" />
+            <div className="close-button" onClick={onClose}>×</div>
+          </div>
+        </div>
+      );
+    };
+    
     // Composant de mot croisé
     const CrosswordPuzzle = ({ onSolve, onWrongAnswer, debugMode }) => {
       const [userAnswers, setUserAnswers] = React.useState([]);
@@ -679,6 +754,7 @@
       const [lives, setLives] = React.useState(3); // Vies par défaut
       const [showComplimentModal, setShowComplimentModal] = React.useState(false);
       const [showLifeLostModal, setShowLifeLostModal] = React.useState(false);
+      const [showMapModal, setShowMapModal] = React.useState(false); // État pour la modale de carte
 
       // Charger les données depuis les cookies au démarrage
       React.useEffect(() => {
@@ -764,7 +840,7 @@
           ],
           answer: "39,50", 
           letter: "S", // Modifié: E → S
-          image: "https://picsum.photos/seed/barques/400/300" 
+          image: "images/barque.png" // Utilisation de l'image locale
         },
         { 
           name: "Île des paons", 
@@ -779,7 +855,7 @@
           ],
           answer: "Oie de Guinée", 
           letter: "R", // Modifié: N → R
-          image: "https://picsum.photos/seed/paons/400/300" 
+          image: "images/ile.png" // Utilisation de l'image locale
         },
         { 
           name: "Grotte", 
@@ -789,7 +865,7 @@
           question: "Complétez le mot croisé pour obtenir la lettre", 
           answer: "", // Pas besoin de réponse car géré par le composant de mot croisé
           letter: "A", // Modifié: I → A
-          image: "https://picsum.photos/seed/grotte/400/300" 
+          image: "images/grotte.png" // Utilisation de l'image locale
         },
         { 
           name: "Pèlerins des nuages et de l'eau", 
@@ -804,7 +880,7 @@
           ],
           answer: "10", 
           letter: "P", // Modifié: G → P
-          image: "https://picsum.photos/seed/pelerins/400/300" 
+          image: "images/statue.png" // Utilisation de l'image locale
         },
         { 
           name: "Pont sud", 
@@ -819,7 +895,7 @@
           ],
           answer: "Oui en 1860", 
           letter: "I", // Modifié: M → I
-          image: "https://picsum.photos/seed/pontsud/400/300" 
+          image: "images/pont.png" // Utilisation de l'image locale
         }
       ];
 
@@ -988,6 +1064,19 @@
       // Rendu du composant principal
       return (
         <div className="p-4 max-w-md mx-auto bg-white rounded-xl shadow-md overflow-hidden relative">
+          {/* Bouton MAP */}
+          <div 
+            className="map-button"
+            onClick={() => setShowMapModal(true)}
+          >
+            MAP
+          </div>
+
+          {/* Modale de carte */}
+          {showMapModal && (
+            <MapModal onClose={() => setShowMapModal(false)} />
+          )}
+          
           {/* Barre de vie */}
           <div className="absolute top-2 right-2 flex items-center">
             <div className="hearts-container mr-2">
