@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Chasse au trésor GPS</title>
+  <title>ijbol quête</title>
   <script src="https://unpkg.com/react@17/umd/react.production.min.js"></script>
   <script src="https://unpkg.com/react-dom@17/umd/react-dom.production.min.js"></script>
   <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
@@ -196,7 +196,7 @@
               ],
               [
                 { "type": "white", "number": 5 }, { "type": "white" }, { "type": "white" }, { "type": "white" }, { "type": "white" }, 
-                { "type": "white" }, { "type": "white" }, { "type": "white" }, { "type": "black" }, { "type": "white" }, 
+                { "type": "red" }, { "type": "white" }, { "type": "white" }, { "type": "black" }, { "type": "white" }, 
                 { "type": "black" }, { "type": "black" }
               ],
               [
@@ -212,7 +212,7 @@
               [
                 { "type": "white" }, { "type": "black" }, { "type": "white" }, { "type": "black" }, { "type": "white", "number": 8 }, 
                 { "type": "white" }, { "type": "white" }, { "type": "white" }, { "type": "white" }, { "type": "white" }, 
-                { "type": "white", "number": 9 }, { "type": "white" }
+                { "type": "white"}, { "type": "white" , "number": 9 }
               ],
               [
                 { "type": "white" }, { "type": "black" }, { "type": "white" }, { "type": "black" }, { "type": "black" }, 
@@ -366,7 +366,10 @@
         setTimeout(() => checkSolution(), 300);
       };
       
-      // Gérer les entrées utilisateur
+
+      // Modification du composant CrosswordPuzzle pour ajouter la fonctionnalité de la case rouge
+
+      // Mettre à jour la fonction handleInputChange pour gérer le cas spécial
       const handleInputChange = (rowIndex, colIndex, value) => {
         // Accepter uniquement une lettre
         if (value.length > 1) {
@@ -382,10 +385,12 @@
         setUserAnswers(newAnswers);
         
         // Si une lettre a été saisie, déplacer le focus vers la cellule suivante
-        if (value !== "") {
+        // Seulement si on n'est pas en mode dernière chance (où on ne remplit qu'une case)
+        if (value !== "" && attemptsLeft > 0) {
           moveToNextCell(rowIndex, colIndex);
         }
       };
+
       
       // Fonction pour gérer la touche Backspace et les flèches
       const handleKeyDown = (e, rowIndex, colIndex) => {
@@ -493,7 +498,39 @@
       };
       
       // Vérifier si le mot croisé est correctement rempli
+      // Modifier la fonction checkSolution pour gérer le cas spécial de la case rouge
       const checkSolution = () => {
+        // Si plus d'essais, on vérifie uniquement la case rouge
+        if (attemptsLeft === 0) {
+          // Trouver la position de la case rouge
+          let redCellPosition = null;
+          for (let i = 0; i < gridData.grid.length; i++) {
+            for (let j = 0; j < gridData.grid[i].length; j++) {
+              if (gridData.grid[i][j].type === "red") {
+                redCellPosition = { row: i, col: j };
+                break;
+              }
+            }
+            if (redCellPosition) break;
+          }
+          
+          // Vérifier si la lettre dans la case rouge est correcte (devrait être "A")
+          if (redCellPosition && userAnswers[redCellPosition.row][redCellPosition.col] === "A") {
+            setIsSolved(true);
+            if (onSolve) {
+              onSolve("A");
+            }
+          } else {
+            // Perdre une vie UNIQUEMENT ici, si la solution de la case rouge n'est pas correcte
+            if (onWrongAnswer) {
+              onWrongAnswer();
+            }
+            alert("Réponse incorrecte pour la case rouge. Vous perdez une vie !");
+          }
+          return;
+        }
+        
+        // Logique originale pour les essais normaux
         // Pour faciliter les tests, considérer comme correct si au moins 70% des lettres sont saisies
         let filledCells = 0;
         let totalCells = 0;
@@ -501,7 +538,7 @@
         // Compter les cellules remplies
         for (let i = 0; i < gridData.grid.length; i++) {
           for (let j = 0; j < gridData.grid[i].length; j++) {
-            if (gridData.grid[i][j].type === "white") {
+            if (gridData.grid[i][j].type === "white" || gridData.grid[i][j].type === "red") {
               totalCells++;
               if (userAnswers[i][j] && userAnswers[i][j] !== "") {
                 filledCells++;
@@ -520,15 +557,20 @@
             onSolve("A"); // Retourne la lettre "A" correspondant à l'énigme de la grotte
           }
         } else {
-          // Perdre une vie si la solution n'est pas correcte
+          // Réduire le nombre d'essais sans perdre de vie
           if (attemptsLeft > 0) {
             setAttemptsLeft(attemptsLeft - 1);
-            if (onWrongAnswer) {
-              onWrongAnswer();
-            }
+            // Ne PAS appeler onWrongAnswer ici pour éviter de perdre une vie pendant les 3 essais
             alert(`La grille est remplie à ${Math.round(fillPercentage)}%, il faut au moins 70% pour valider. Il vous reste ${attemptsLeft - 1} essai(s).`);
+            
+            // Si c'était le dernier essai, ajouter un message supplémentaire
+            if (attemptsLeft - 1 === 0) {
+              setTimeout(() => {
+                alert("Vous pouvez maintenant essayer de deviner uniquement la lettre dans la case rouge. Attention: une erreur vous fera perdre une vie!");
+              }, 500);
+            }
           } else {
-            alert("Vous n'avez plus d'essais disponibles. Regagnez des vies pour réessayer.");
+            alert("Vous n'avez plus d'essais disponibles. Essayez de trouver la lettre dans la case rouge!");
           }
         }
       };
@@ -556,6 +598,7 @@
             <div className="mb-4">
               <p className="text-gray-700 mb-2">
                 Remplissez le mot croisé pour débloquer l'indice de la grotte.
+                Si vous ne trouvez pas tout, la lettre qui croise le 5 et le 2 est la solution  
               </p>
               <div className="flex justify-between items-center mb-2">
                 <span className="text-sm text-gray-600">Essais restants: {attemptsLeft}</span>
@@ -573,65 +616,67 @@
           
           <div className="flex flex-col gap-4">
             {/* Grille de mot croisé */}
-            <div className="w-full overflow-x-auto pb-2">
-              <div className="max-w-crossword">
-                <div 
-                  className="grid gap-px bg-gray-300 inline-block mx-auto"
-                  style={{ 
-                    gridTemplateRows: `repeat(${gridData.grid.length}, 25px)`,
-                    gridTemplateColumns: `repeat(${gridData.grid[0].length}, 25px)`
-                  }}
-                >
-                  {gridData.grid.map((row, rowIndex) => (
-                    row.map((cell, colIndex) => (
-                      <div
-                        key={`${rowIndex}-${colIndex}`}
-                        className={`relative flex items-center justify-center grid-item-small
-                          ${cell.type === "black" ? "bg-black" : "bg-white"}
-                          ${focusedCell && focusedCell.row === rowIndex && focusedCell.col === colIndex 
-                            ? "ring-1 ring-blue-500" : ""}
-                        `}
-                        onClick={() => cell.type === "white" && focusCell(rowIndex, colIndex)}
-                      >
-                        {cell.type === "white" && cell.number && (
-                          <span className="absolute top-0 left-0.5 text-xxs md:text-xs font-semibold text-gray-500">
-                            {cell.number}
-                          </span>
-                        )}
-                        
-                        {cell.type === "white" && (
-                          <input
-                            id={`cell-${rowIndex}-${colIndex}`}
-                            type="text"
-                            maxLength="1"
-                            className="w-full h-full text-center font-bold uppercase bg-transparent outline-none text-xs md:text-base"
-                            value={userAnswers[rowIndex] && userAnswers[rowIndex][colIndex] ? userAnswers[rowIndex][colIndex] : ""}
-                            onChange={(e) => handleInputChange(rowIndex, colIndex, e.target.value)}
-                            onKeyDown={(e) => handleKeyDown(e, rowIndex, colIndex)}
-                            disabled={isSolved || attemptsLeft === 0}
-                          />
-                        )}
-                      </div>
-                    ))
-                  ))}
-                </div>
-                
-                {!isSolved && attemptsLeft > 0 && (
-                  <button 
-                    onClick={checkSolution}
-                    className="mt-4 w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded"
-                  >
-                    Vérifier la solution
-                  </button>
-                )}
-                
-                {!isSolved && attemptsLeft === 0 && (
-                  <div className="mt-4 bg-red-100 p-3 rounded border border-red-300 text-red-700 text-center">
-                    <p>Vous n'avez plus d'essais. Regagnez des vies pour continuer.</p>
-                  </div>
-                )}
+          <div className="w-full overflow-x-auto pb-2">
+            <div className="max-w-crossword">
+              <div 
+                className="grid gap-px bg-gray-300 inline-block mx-auto"
+                style={{ 
+                  gridTemplateRows: `repeat(${gridData.grid.length}, 25px)`,
+                  gridTemplateColumns: `repeat(${gridData.grid[0].length}, 25px)`
+                }}
+              >
+                {gridData.grid.map((row, rowIndex) => (
+                  row.map((cell, colIndex) => (
+                    <div
+                      key={`${rowIndex}-${colIndex}`}
+                      className={`relative flex items-center justify-center grid-item-small
+                        ${cell.type === "black" ? "bg-black" : 
+                          cell.type === "red" && attemptsLeft === 0 ? "bg-red-300" : 
+                          cell.type === "red" ? "bg-white" : "bg-white"}
+                        ${focusedCell && focusedCell.row === rowIndex && focusedCell.col === colIndex 
+                          ? "ring-1 ring-blue-500" : ""}
+                      `}
+                      onClick={() => (cell.type === "white" || cell.type === "red") && focusCell(rowIndex, colIndex)}
+                    >
+                      {(cell.type === "white" || cell.type === "red") && cell.number && (
+                        <span className="absolute top-0 left-0.5 text-xxs md:text-xs font-semibold text-gray-500">
+                          {cell.number}
+                        </span>
+                      )}
+                      
+                      {(cell.type === "white" || cell.type === "red") && (
+                        <input
+                          id={`cell-${rowIndex}-${colIndex}`}
+                          type="text"
+                          maxLength="1"
+                          className="w-full h-full text-center font-bold uppercase bg-transparent outline-none text-xs md:text-base"
+                          value={userAnswers[rowIndex] && userAnswers[rowIndex][colIndex] ? userAnswers[rowIndex][colIndex] : ""}
+                          onChange={(e) => handleInputChange(rowIndex, colIndex, e.target.value)}
+                          onKeyDown={(e) => handleKeyDown(e, rowIndex, colIndex)}
+                          disabled={isSolved || (attemptsLeft === 0 && cell.type !== "red")}
+                        />
+                      )}
+                    </div>
+                  ))
+                ))}
               </div>
+              
+              {!isSolved && (
+                <button 
+                  onClick={checkSolution}
+                  className={`mt-4 w-full ${attemptsLeft === 0 ? 'bg-red-500 hover:bg-red-600' : 'bg-blue-500 hover:bg-blue-600'} text-white font-bold py-2 px-4 rounded`}
+                >
+                  {attemptsLeft === 0 ? "Vérifier la case rouge" : "Vérifier la solution"}
+                </button>
+              )}
+              
+              {!isSolved && attemptsLeft === 0 && (
+                <div className="mt-4 bg-red-100 p-3 rounded border border-red-300 text-red-700 text-center">
+                  <p>Plus d'essais disponibles! Trouvez la lettre dans la case rouge (maintenant colorée). Attention: une erreur vous fera perdre une vie!</p>
+                </div>
+              )}
             </div>
+          </div>
             
             {/* Indices */}
             <div className="w-full">
@@ -1165,7 +1210,7 @@
             )}
           </div>
           
-          <h2 className="text-xl font-bold text-gray-800 mb-4">Chasse au trésor GPS</h2>
+          <h2 className="text-xl font-bold text-gray-800 mb-4">ijbol quête</h2>
           
           {/* Affichage du chronomètre */}
           <div className="flex items-center justify-between mb-4">
