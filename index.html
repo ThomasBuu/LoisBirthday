@@ -284,19 +284,19 @@
       // Solutions attendues avec les tailles correctes
       const expectedSolutions = {
         "across": {
-          3: "AAA",
-          5: "AAAAAAAA",
-          8: "AAAAAAAA",
-          10: "AAAAAA",
-          11: "AAAA"
+          3: "nfr",
+          5: "bordeaux",
+          8: "danielle",
+          10: "tortue",
+          11: "nice"
         },
         "down": {
-          1: "AAAAAAAAA",
-          2: "AAAAAAAAA",
-          4: "AAAAAA",
-          6: "AAAAA",
-          7: "AAAAAAAA",
-          9: "AAAAAAAA"
+          1: "terrifier",
+          2: "champagne",
+          4: "rupaul",
+          6: "swift",
+          7: "xingxing",
+          9: "ethereal"
         }
       };
       
@@ -755,6 +755,9 @@
       const [showComplimentModal, setShowComplimentModal] = React.useState(false);
       const [showLifeLostModal, setShowLifeLostModal] = React.useState(false);
       const [showMapModal, setShowMapModal] = React.useState(false); // État pour la modale de carte
+      const [startTime, setStartTime] = React.useState(null);  // Heure de début
+      const [elapsedTime, setElapsedTime] = React.useState(0); // Temps écoulé
+      const [watchId, setWatchId] = React.useState(null);      // ID du watcher de géolocalisation
 
       // Charger les données depuis les cookies au démarrage
       React.useEffect(() => {
@@ -771,6 +774,14 @@
           // Si pas de cookie, initialiser à 3 vies
           setCookie('lives', 3, 7); // Expire dans 7 jours
         }
+        
+        // Charger le temps de départ depuis les cookies
+        const savedStartTime = getCookie('startTime');
+        if (savedStartTime) {
+          setStartTime(parseInt(savedStartTime));
+          setPermissionStatus('granted');
+          requestLocation(); // Redemander la géolocalisation si on a déjà commencé
+        }
       }, []);
 
       // Sauvegarder les données dans localStorage à chaque mise à jour
@@ -784,6 +795,19 @@
       React.useEffect(() => {
         setCookie('lives', lives, 7); // Expire dans 7 jours
       }, [lives]);
+      
+      // Effet pour mettre à jour le chronomètre chaque seconde
+      React.useEffect(() => {
+        if (startTime) {
+          const intervalId = setInterval(() => {
+            const now = Date.now();
+            const elapsed = Math.floor((now - startTime) / 1000); // Temps écoulé en secondes
+            setElapsedTime(elapsed);
+          }, 1000);
+          
+          return () => clearInterval(intervalId);
+        }
+      }, [startTime]);
       
       // Fonctions pour gérer les cookies
       const setCookie = (name, value, days) => {
@@ -805,6 +829,29 @@
           if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
         }
         return null;
+      };
+      
+      // Fonction pour démarrer le chronomètre
+      const startTimer = () => {
+        // Vérifier si un chronomètre existe déjà dans les cookies
+        const savedStartTime = getCookie('startTime');
+        
+        if (savedStartTime) {
+          setStartTime(parseInt(savedStartTime));
+        } else {
+          const now = Date.now();
+          setStartTime(now);
+          setCookie('startTime', now.toString(), 7); // 7 jours d'expiration
+        }
+      };
+      
+      // Formater le temps en heures:minutes:secondes
+      const formatTime = (timeInSeconds) => {
+        const hours = Math.floor(timeInSeconds / 3600);
+        const minutes = Math.floor((timeInSeconds % 3600) / 60);
+        const seconds = timeInSeconds % 60;
+        
+        return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
       };
       
       // Fonction pour perdre une vie
@@ -918,6 +965,11 @@
         
         const { latitude, longitude } = position.coords;
         
+        // Ne pas vérifier la proximité si nous sommes en mode debug et qu'un lieu est sélectionné
+        if (debugMode && selectedDebugLocation) {
+          return;
+        }
+        
         // Trouver le lieu le plus proche
         let closestLocation = null;
         let minDistance = Infinity;
@@ -950,6 +1002,9 @@
           return;
         }
         
+        // Démarrer le chronomètre
+        startTimer();
+        
         navigator.geolocation.getCurrentPosition(
           (position) => {
             setCurrentPosition(position);
@@ -957,7 +1012,7 @@
             setPermissionStatus('granted');
             
             // Mettre à jour la position régulièrement
-            const watchId = navigator.geolocation.watchPosition(
+            const id = navigator.geolocation.watchPosition(
               (newPosition) => {
                 setCurrentPosition(newPosition);
                 checkProximity(newPosition);
@@ -968,7 +1023,7 @@
               }
             );
             
-            return () => navigator.geolocation.clearWatch(watchId);
+            setWatchId(id);
           },
           (err) => {
             if (err.code === 1) { // PERMISSION_DENIED
@@ -1032,6 +1087,11 @@
       const selectDebugLocation = (location) => {
         setSelectedDebugLocation(location);
         setNearbyLocation(location);
+        // Désactiver temporairement la surveillance GPS pour éviter les interférences
+        if (watchId) {
+          navigator.geolocation.clearWatch(watchId);
+          setWatchId(null);
+        }
       };
 
       // Vérifier le mot secret
@@ -1106,6 +1166,15 @@
           </div>
           
           <h2 className="text-xl font-bold text-gray-800 mb-4">Chasse au trésor GPS</h2>
+          
+          {/* Affichage du chronomètre */}
+          <div className="flex items-center justify-between mb-4">
+            {startTime && (
+              <div className="text-gray-600 font-mono">
+                <span className="font-medium">Temps écoulé:</span> {formatTime(elapsedTime)}
+              </div>
+            )}
+          </div>
           
           {permissionStatus === 'pending' && (
             <button 
