@@ -1036,7 +1036,24 @@
           setNearbyLocation(null);
         }
       };
-
+      
+            // Fonction pour supprimer tous les cookies et données locales
+      const resetAllData = () => {
+        // Supprimer tous les cookies
+        document.cookie.split(";").forEach(function(c) {
+          document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+        });
+        
+        // Supprimer les données de localStorage
+        localStorage.removeItem('solvedLocations');
+        
+        // Alerter l'utilisateur
+        alert("Toutes les données ont été réinitialisées. La page va être rechargée.");
+        
+        // Recharger la page
+        window.location.reload();
+      };
+      
       // Demander la géolocalisation
       const requestLocation = () => {
         setPermissionStatus('requesting');
@@ -1140,6 +1157,7 @@
       };
 
       // Vérifier le mot secret
+      // Modification de la fonction checkSecretWord existante
       const checkSecretWord = () => {
         // Le mot secret est "PARIS"
         if (secretWord.toLowerCase() === "paris") {
@@ -1147,6 +1165,9 @@
         } else if (secretWord.toLowerCase() === "debug") {
           activateDebugMode();
           setSecretWord('');
+        } else if (secretWord.toUpperCase() === "RESETALL") {
+          // Nouveau cas pour réinitialiser les données
+          resetAllData();
         } else {
           // Perdre une vie pour mauvaise tentative
           loseLife();
