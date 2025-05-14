@@ -388,6 +388,15 @@
       
       return totalMinutes.toString();
     }
+
+    function getCompletionTimeInSeconds() {
+      const timeInSeconds = localStorage.getItem('completionTime');
+      if (!timeInSeconds) return "??";
+      
+      const totalSeconds = parseInt(timeInSeconds);
+      
+      return totalSeconds.toString();
+    }
     
     // Afficher le temps sur la page
     document.addEventListener('DOMContentLoaded', () => {
@@ -401,7 +410,8 @@
       if (btnSms) {
         btnSms.addEventListener('click', () => {
           const minutes = getCompletionTimeInMinutes();
-          const message = `J'ai mis : ${minutes} minutes`;
+          const seconde = getCompletionTimeInSeconds();
+          const message = `J'ai mis : ${minutes} minutes et ${seconde} secondes`;
           window.location.href = `sms:${phoneNumber}?body=${encodeURIComponent(message)}`;
         });
       }
