@@ -1,3 +1,5 @@
+// Modifications pour index2.html - Affichage du temps et SMS
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -63,7 +65,7 @@
       font-size: 1.5rem;
       color: #ffffff;
       text-align: center;
-      margin-bottom: 2rem;
+      margin-bottom: 1rem;
       animation: subtitleBounce 1s infinite alternate;
     }
     
@@ -72,7 +74,28 @@
       to { transform: translateY(-10px); }
     }
     
-    .btn-maps {
+    /* Nouveau style pour l'affichage du temps */
+    .time-display {
+      font-family: 'Bungee Inline', cursive;
+      font-size: 1.8rem;
+      color: #ffff00;
+      text-align: center;
+      margin-bottom: 2rem;
+      text-shadow: 0 0 10px rgba(255, 255, 0, 0.7), 
+                   0 0 20px rgba(255, 255, 0, 0.5);
+      animation: timeGlow 1.5s infinite alternate;
+      background: rgba(0, 0, 0, 0.3);
+      padding: 0.5rem 2rem;
+      border-radius: 30px;
+      transform: rotate(-1deg);
+    }
+    
+    @keyframes timeGlow {
+      from { text-shadow: 0 0 10px rgba(255, 255, 0, 0.7), 0 0 20px rgba(255, 255, 0, 0.5); }
+      to { text-shadow: 0 0 15px rgba(255, 255, 0, 0.9), 0 0 30px rgba(255, 255, 0, 0.7), 0 0 45px rgba(255, 255, 0, 0.5); }
+    }
+    
+    .btn-sms {
       font-family: 'Bungee Inline', cursive;
       font-size: 1.2rem;
       padding: 1rem 2rem;
@@ -86,11 +109,11 @@
       overflow: hidden;
       transition: all 0.3s ease;
       z-index: 20;
-      text-decoration: none; /* Pour enlever le soulignement du lien */
-      display: inline-block; /* Pour que le padding s'applique correctement */
+      text-decoration: none;
+      display: inline-block;
     }
     
-    .btn-maps:before {
+    .btn-sms:before {
       content: '';
       position: absolute;
       top: 0;
@@ -101,16 +124,16 @@
       transition: all 0.5s;
     }
     
-    .btn-maps:hover {
+    .btn-sms:hover {
       transform: translateY(-5px);
       box-shadow: 0 15px 25px rgba(0, 0, 0, 0.4);
     }
     
-    .btn-maps:hover:before {
+    .btn-sms:hover:before {
       left: 100%;
     }
     
-    .btn-maps:active {
+    .btn-sms:active {
       transform: translateY(0);
       box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
     }
@@ -247,6 +270,20 @@
       z-index: 100;
     }
     
+    /* Trophy animation */
+    @keyframes trophyBounce {
+      0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+      40% { transform: translateY(-30px); }
+      60% { transform: translateY(-15px); }
+    }
+
+    .trophy {
+      font-size: 3rem;
+      animation: trophyBounce 2s ease infinite;
+      display: inline-block;
+      margin: 0 0.5rem;
+    }
+    
     /* Responsiveness */
     @media (max-width: 768px) {
       .title {
@@ -255,6 +292,10 @@
       
       .subtitle {
         font-size: 1.2rem;
+      }
+      
+      .time-display {
+        font-size: 1.4rem;
       }
       
       .bouncing-image {
@@ -269,10 +310,17 @@
     <h1 class="title" id="title">BRAVO CHAMPION ! 🏆</h1>
     <h2 class="subtitle" id="subtitle">Tu as trouvé le mot secret : PARIS</h2>
     
-    <!-- METTEZ VOTRE PROPRE LIEN GOOGLE MAPS ICI -->
-    <a href="https://maps.app.goo.gl/keXuuPFDeFwogPVd6?g_st=i&utm_campaign=ac-im" target="_blank" class="btn-maps" id="btn-maps">
-      DIRECTION LE TRÉSOR 🗺️
-    </a>
+    <!-- Ajout de l'affichage du temps -->
+    <div class="time-display" id="time-display">
+      <span class="trophy">🏆</span>
+      TEMPS : <span id="time-value">XX:XX:XX</span>
+      <span class="trophy">🏆</span>
+    </div>
+    
+    <!-- Changement du bouton Google Maps en SMS -->
+    <button id="btn-sms" class="btn-sms">
+      VALIDER MON TEMPS ⏱️
+    </button>
     
     <p class="rainbow-text" id="rainbow-text">Prends une photo avec le trésor et envoie-la nous! 📸</p>
   </div>
@@ -298,7 +346,11 @@
       "images/image2.png",
       "images/image3.png", // Ajoutez d'autres images simplement ici
       "images/image4.png",
-      "images/image5.png"
+      "images/image5.png",
+      "images/image6.png",
+      "images/image7.png",
+      "images/image8.png"
+
       // Vous pouvez continuer à ajouter autant d'images que vous voulez
     ];
     
@@ -310,8 +362,53 @@
     
     // Couleurs des confettis
     const confettiColors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff'];
+
+    // Numéro de téléphone pour le SMS (même que sur la première page)
+    const phoneNumber = "+33634481088";
     
     // ===== Initialisation =====
+    
+    // Récupérer et afficher le temps écoulé
+    function getCompletionTime() {
+      const timeInSeconds = localStorage.getItem('completionTime');
+      if (!timeInSeconds) return "??:??:??";
+      
+      const totalSeconds = parseInt(timeInSeconds);
+      const hours = Math.floor(totalSeconds / 3600);
+      const minutes = Math.floor((totalSeconds % 3600) / 60);
+      const seconds = totalSeconds % 60;
+      
+      return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    }
+    
+    // Calculer uniquement les minutes pour le message SMS
+    function getCompletionTimeInMinutes() {
+      const timeInSeconds = localStorage.getItem('completionTime');
+      if (!timeInSeconds) return "??";
+      
+      const totalSeconds = parseInt(timeInSeconds);
+      const totalMinutes = Math.ceil(totalSeconds / 60); // Arrondir au-dessus pour ne pas afficher 0 minute
+      
+      return totalMinutes.toString();
+    }
+    
+    // Afficher le temps sur la page
+    document.addEventListener('DOMContentLoaded', () => {
+      const timeValue = document.getElementById('time-value');
+      if (timeValue) {
+        timeValue.textContent = getCompletionTime();
+      }
+      
+      // Configurer le bouton SMS
+      const btnSms = document.getElementById('btn-sms');
+      if (btnSms) {
+        btnSms.addEventListener('click', () => {
+          const minutes = getCompletionTimeInMinutes();
+          const message = `J'ai mis : ${minutes} minutes`;
+          window.location.href = `sms:${phoneNumber}?body=${encodeURIComponent(message)}`;
+        });
+      }
+    });
     
     // Create confetti
     const confettiContainer = document.getElementById('confetti-container');
@@ -445,7 +542,7 @@
     });
     
     // Effet de secousse lors du clic sur le bouton
-    const button = document.querySelector('.btn-maps');
+    const button = document.querySelector('.btn-sms');
     if (button) {
       button.addEventListener('click', (e) => {
         // Ne pas bloquer la navigation
