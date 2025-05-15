@@ -395,7 +395,7 @@
       
       const totalSeconds = parseInt(timeInSeconds);
       
-      return totalSeconds.toString();
+      return (totalSeconds % 60).toString(); // Reste des secondes (0–59)
     }
     
     // Afficher le temps sur la page
