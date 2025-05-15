@@ -384,7 +384,7 @@
       if (!timeInSeconds) return "??";
       
       const totalSeconds = parseInt(timeInSeconds);
-      const totalMinutes = Math.ceil(totalSeconds / 60); // Arrondir au-dessus pour ne pas afficher 0 minute
+      const totalMinutes = Math.floor(totalSeconds / 60); // Arrondir au nombre le plus bas
       
       return totalMinutes.toString();
     }
